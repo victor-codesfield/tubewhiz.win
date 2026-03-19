@@ -1,7 +1,7 @@
 # TubeWhiz — Architecture
 
 > YouTube transcript extraction, library management, and AI chat.
-> Built by Victor Jarmolkovicius as a showcase/safe-to-discuss project (see `victor-full-context.md` for broader context — TubeWhiz is one of the projects safe to demonstrate publicly alongside the portfolio backtester and Reachio, unlike GatheredCards which has privacy constraints).
+> Built by Victor Codesfield as a showcase project.
 
 ---
 

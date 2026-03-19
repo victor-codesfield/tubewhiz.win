@@ -74,4 +74,4 @@ See [ARCHITECTURE.md → Environment Variables](ARCHITECTURE.md#environment-vari
 
 ---
 
-Built by [Victor Jarmolkovicius](https://github.com/victor-codesfield)
+Built by [Victor Codesfield](https://github.com/victor-codesfield)
