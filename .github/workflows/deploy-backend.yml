@@ -1,12 +1,17 @@
-name: Deploy to Fly.io
+name: Deploy Backend to Fly.io
 
 on:
   push:
     branches: [main]
+    paths:
+      - 'backend-new/**'
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend-new
     steps:
       - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master
