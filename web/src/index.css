@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Typing indicator */
+@keyframes bounce {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-6px); }
+}
+
+.typing-dot {
+  @apply w-2 h-2 bg-gray-400 rounded-full;
+  animation: bounce 1.2s infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { @apply bg-gray-300 rounded-full; }
+::-webkit-scrollbar-thumb:hover { @apply bg-gray-400; }
+
+/* Markdown in chat */
+.prose-chat p { @apply mb-2 last:mb-0; }
+.prose-chat ul { @apply list-disc pl-5 mb-2; }
+.prose-chat ol { @apply list-decimal pl-5 mb-2; }
+.prose-chat code { @apply bg-gray-100 px-1.5 py-0.5 rounded text-sm font-mono; }
+.prose-chat pre { @apply bg-gray-900 text-gray-100 p-3 rounded-lg overflow-x-auto mb-2; }
+.prose-chat pre code { @apply bg-transparent p-0 text-inherit; }
+.prose-chat h1, .prose-chat h2, .prose-chat h3 { @apply font-semibold mb-1; }
+.prose-chat blockquote { @apply border-l-4 border-indigo-300 pl-3 italic text-gray-600 mb-2; }
