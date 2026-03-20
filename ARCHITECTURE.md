@@ -5,6 +5,18 @@
 
 ---
 
+## Project Evolution
+
+1. **Python scraper (v1)** — Initial backend was a Python-based YouTube transcript scraper. Worked locally but failed reliably in production — YouTube's anti-bot measures blocked server-side requests from cloud IPs.
+
+2. **Node.js + innertube API (v2)** — Rewrote the backend in Express/Node.js using YouTube's internal innertube player API (the same API their mobile apps use), with ANDROID and IOS client fallbacks. Added **rotating residential proxies** (Webshare) to avoid IP-based rate limiting. This is the current working approach.
+
+3. **Chrome extension → web app pivot** — Originally planned as a Chrome extension (similar to Tactiq/Transcribr.io). Abandoned this as the primary product because Chrome Web Store review cycles (days to weeks per update) made it impossible to iterate quickly when YouTube pushes breaking changes. The web app allows instant deployments and same-day fixes. Extension code still exists in `extension-new/` but the web app (`web/`) is the primary product.
+
+**On transcript scraping:** The innertube scraping library is actively maintained and frequently updated — critical because YouTube regularly changes their anti-scraping defenses. The data being extracted (video captions/transcripts) is publicly available content that YouTube surfaces to all viewers.
+
+---
+
 ## High-Level Overview
 
 ```
@@ -139,8 +151,8 @@ chatMessages: [{ role, content, created_at }]
 
 ### Deployment
 
-- **Fly.io** — `fly.toml`: app `backend-youtube-app`, region `iad`, shared-cpu-1x, 512MB, auto-stop/start
-- **CI/CD** — `.github/workflows/deploy.yml`: on push to `main` → `flyctl deploy --remote-only` using `FLY_API_TOKEN` repo secret
+- **Fly.io** — `fly.toml`: app `tubewhiz-win`, region `iad`, shared-cpu-1x, 256MB, auto-stop/start
+- **CI/CD** — `.github/workflows/deploy-backend.yml`: on push to `main` (paths: `backend-new/**`) → `flyctl deploy --remote-only` using `FLY_API_TOKEN` repo secret
 
 ---
 
@@ -202,7 +214,7 @@ chatMessages: [{ role, content, created_at }]
 |--------|------|--------|-------|
 | `tubewhiz.win` | A | `76.76.21.21` (Vercel) | DNS only |
 | `www` | CNAME | Vercel | DNS only |
-| `api` | A/AAAA | Fly.io | DNS only |
+| `api` | CNAME | `tubewhiz-win.fly.dev` | DNS only |
 
 **Why no Cloudflare proxy:** Vercel and Fly.io both have their own global edge networks + managed SSL. Cloudflare proxy adds latency (double edge hop), causes SSL redirect loops, and breaks Vercel edge functions. DNS-only is correct here.
 
