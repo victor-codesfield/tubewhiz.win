@@ -11,7 +11,7 @@
 
 2. **Node.js + innertube API (v2)** — Rewrote the backend in Express/Node.js using YouTube's internal innertube player API (the same API their mobile apps use), with ANDROID and IOS client fallbacks. Added **rotating residential proxies** (Webshare) to avoid IP-based rate limiting. This is the current working approach.
 
-3. **Chrome extension → web app pivot** — Originally planned as a Chrome extension (similar to Tactiq/Transcribr.io). Abandoned this as the primary product because Chrome Web Store review cycles (days to weeks per update) made it impossible to iterate quickly when YouTube pushes breaking changes. The web app allows instant deployments and same-day fixes. Extension code still exists in `extension-new/` but the web app (`web/`) is the primary product.
+3. **Chrome extension → web app pivot** — Originally planned as a Chrome extension (similar to Tactiq/Transcribr.io). Abandoned this as the primary product because Chrome Web Store review cycles (days to weeks per update) made it impossible to iterate quickly when YouTube pushes breaking changes. The web app allows instant deployments and same-day fixes.
 
 **On transcript scraping:** The innertube scraping library is actively maintained and frequently updated — critical because YouTube regularly changes their anti-scraping defenses. The data being extracted (video captions/transcripts) is publicly available content that YouTube surfaces to all viewers.
 
@@ -20,16 +20,15 @@
 ## High-Level Overview
 
 ```
-┌─────────────┐      ┌──────────────┐      ┌──────────────────┐
-│  Chrome      │      │  Web App     │      │  Landing Page    │
-│  Extension   │      │  (Vite+React)│      │  (Next.js 15)    │
-│  MV3         │      │  Vercel      │      │  (not deployed)  │
-└──────┬───────┘      └──────┬───────┘      └──────────────────┘
-       │                     │
-       │   JWT Bearer Auth   │
-       └────────┬────────────┘
-                │  HTTPS
-                ▼
+        ┌──────────────┐
+        │  Web App     │
+        │  (Vite+React)│
+        │  Vercel      │
+        └──────┬───────┘
+               │
+               │  JWT Bearer Auth
+               │  HTTPS
+               ▼
         ┌───────────────┐
         │  Express API  │
         │  Fly.io (iad) │
@@ -42,14 +41,12 @@
    Atlas     APIs      GPT-4o
 ```
 
-**Four apps, one repo (monorepo-style, no workspace tooling):**
+**Two apps, one repo (monorepo-style, no workspace tooling):**
 
 | App | Dir | Stack | Hosting | URL |
 |-----|-----|-------|---------|-----|
 | Web dashboard | `web/` | Vite + React 18 + Tailwind | Vercel (auto-deploy on push) | tubewhiz.win |
 | API backend | `backend-new/` | Express + Mongoose | Fly.io (GitHub Actions on push to main) | api.tubewhiz.win |
-| Chrome extension | `extension-new/` | Chrome MV3 + React + Vite | Chrome Web Store | — |
-| Marketing landing | `landing-new/` | Next.js 15 + React 19 + Tailwind | Not deployed | — |
 
 ---
 
@@ -57,7 +54,7 @@
 
 ### Server (`server.js`)
 - Express with Helmet, CORS, JSON (50MB limit), cookie-parser
-- CORS allows: `localhost:3000/3001/4000`, `tubewhiz.win`, `chrome-extension://*`
+- CORS allows: `localhost:3000/3001/4000`, `tubewhiz.win`
 - Request logging middleware (method, path, duration)
 - Health check at `/health`, info at `/`
 
@@ -94,16 +91,17 @@
 
 ### Transcript Fetching — The Innertube Approach
 
-YouTube blocks simple scraping from server IPs. TubeWhiz uses the **innertube player API** — the same internal API YouTube's mobile apps use:
+YouTube blocks simple scraping from server IPs. TubeWhiz uses two layers of evasion:
 
-1. **ANDROID client** (primary) — `POST youtube.com/youtubei/v1/player` with Android UA + context
-2. **IOS client** (fallback) — Same endpoint, iOS UA + context
-3. Response includes `captions.playerCaptionsTracklistRenderer.captionTracks`
-4. Fetch timedtext XML from the caption track URL
-5. Parse `<p t="" d="">` (milliseconds) or `<text start="" dur="">` (seconds) format
-6. Format as `[MM:SS] text` lines
+**Layer 1 — Residential proxies:** All requests route through Webshare rotating residential proxies (`undici` ProxyAgent), so YouTube sees a home IP, not a datacenter. Configured via `PROXY_LIST` env var (comma-separated proxy URLs). Retry logic with backoff (2 retries).
 
-**Proxy rotation** — All innertube calls go through Webshare rotating residential proxies (`undici` ProxyAgent) to avoid IP-based rate limiting. Configured via `PROXY_LIST` env var (comma-separated proxy URLs). Retry logic with backoff (2 retries).
+**Layer 2 — Mobile client spoofing (always applied):** Every request hits the **innertube player API** (`POST youtube.com/youtubei/v1/player`) — the same internal API YouTube's mobile apps use. The request mimics a real mobile app with matching user agent and client context. ANDROID client is used first; if YouTube blocks it, falls back to IOS client (same endpoint, different UA and context).
+
+**Transcript extraction flow:**
+1. Hit innertube API via proxy → response includes `captions.playerCaptionsTracklistRenderer.captionTracks`
+2. Fetch timedtext XML from the caption track URL
+3. Parse `<p t="" d="">` (milliseconds) or `<text start="" dur="">` (seconds) format
+4. Format as `[MM:SS] text` lines
 
 ### Models (Mongoose)
 
@@ -195,16 +193,6 @@ chatMessages: [{ role, content, created_at }]
 - **Vercel** — auto-deploy on push to `main`
 - Domain: `tubewhiz.win` (A record → `76.76.21.21`)
 - **Cloudflare DNS only** (no proxy) — see `DEPLOYMENT-NOTES.md`
-
----
-
-## Chrome Extension (`extension-new/`)
-
-- Manifest V3 with `sidePanel`, `activeTab`, `identity` permissions
-- Content script injects on `youtube.com/*`
-- Side panel UI: React + Vite build
-- OAuth2 via Chrome identity API (same Google client ID)
-- Talks to same backend API (`api.tubewhiz.win`)
 
 ---
 

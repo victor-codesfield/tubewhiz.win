@@ -14,8 +14,6 @@ The scraping library we use is actively maintained and frequently updated — im
 
 The original plan was to build a Chrome extension similar to Tactiq/Transcribr.io. We quickly realized that Chrome Web Store review/approval cycles (days to weeks per update) made it impractical to iterate and troubleshoot at the speed needed — especially when YouTube makes breaking changes to their API. Shipping as a **web app** gives us instant deployments and the ability to push fixes in minutes, not days.
 
-The extension code (`extension-new/`) still exists in the architecture but the web app (`web/`) is the primary product.
-
 ## What it does
 
 Paste any YouTube URL — get the full transcript instantly. Save to your library, chat with AI about the content, or bulk-extract an entire channel's transcripts at once.
@@ -34,7 +32,8 @@ Paste any YouTube URL — get the full transcript instantly. Save to your librar
 | Backend | Express + Mongoose | Fly.io |
 | Database | MongoDB Atlas | — |
 | AI | OpenAI GPT-4o | — |
-| Auth | Google OAuth 2.0 + JWT | — |
+| Login | Google OAuth 2.0 | — |
+| Sessions | JWT (30-day) | — |
 | Proxy | Webshare residential proxies | — |
 
 ### How transcripts are fetched
